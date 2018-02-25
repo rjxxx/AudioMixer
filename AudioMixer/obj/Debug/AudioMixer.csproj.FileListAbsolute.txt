@@ -1,6 +1,0 @@
-D:\Projects\AudioMixer\AudioMixer\obj\Debug\AudioMixer.csprojResolveAssemblyReference.cache
-D:\Projects\AudioMixer\AudioMixer\obj\Debug\AudioMixer.csproj.CoreCompileInputs.cache
-D:\Projects\AudioMixer\AudioMixer\bin\Debug\AudioMixer.exe
-D:\Projects\AudioMixer\AudioMixer\bin\Debug\AudioMixer.pdb
-D:\Projects\AudioMixer\AudioMixer\obj\Debug\AudioMixer.exe
-D:\Projects\AudioMixer\AudioMixer\obj\Debug\AudioMixer.pdb
