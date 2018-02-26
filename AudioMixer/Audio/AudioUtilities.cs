@@ -163,8 +163,7 @@ namespace Audio
             
             IAudioSessionEnumerator sessionEnumerator;
             mgr.GetSessionEnumerator(out sessionEnumerator);
-            int count;
-            sessionEnumerator.GetCount(out count);
+            sessionEnumerator.GetCount(out int count);
 
             for (int i = 0; i < count; i++)
             {
@@ -172,7 +171,7 @@ namespace Audio
                 sessionEnumerator.GetSession(i, out ctl);
                 if (ctl == null)
                     continue;
-
+                
                 IAudioSessionControl2 ctl2 = ctl as IAudioSessionControl2;
                 if (ctl2 != null)
                 {

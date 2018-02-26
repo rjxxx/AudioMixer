@@ -27,14 +27,14 @@ namespace Audio
             set
             { 
                 AudioUtilities.ISimpleAudioVolume volumeControl = _ctl as AudioUtilities.ISimpleAudioVolume;
-                if (value > 100)
+                if (value > 1)
                 {
-                    value = 100;
+                    value = 1;
                 } else if (value < 0)
                 {
                     value = 0;
                 }
-                volumeControl.SetMasterVolume(value / 100, Guid.Empty);
+                volumeControl.SetMasterVolume(value, Guid.Empty);
             }
         }
 

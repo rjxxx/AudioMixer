@@ -7,7 +7,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 using static Audio.AudioUtilities;
 
-namespace AudioMixer
+namespace Audio
 {
     class AudioController
     {
@@ -16,7 +16,14 @@ namespace AudioMixer
 
         public AudioController()
         {
-            IList<AudioSession> sessions = AudioUtilities.GetAndSubscribeForAllSessions(new AudioNotification(this));
+            AudioUtilities.GetAndSubscribeForAllSessions(new AudioNotification(this));
+
+        }
+
+        public void AddProgram(string name, string exePath)
+        {
+            programs.Add(new Program(name, exePath));
+            IList<AudioSession> sessions = AudioUtilities.GetAllSessions();
             foreach (var program in programs)
             {
                 foreach (var session in sessions)
@@ -30,12 +37,53 @@ namespace AudioMixer
                     }
                 }
             }
-        }
-        public void AddProgram(string name, string exePath)
-        {
-            programs.Add(new Program(name, exePath));
+            
         }
 
+        public void VolumeUp(string name)
+        {
+            foreach (var program in programs)
+            {
+                if (name == program.Name)
+                {
+                    foreach (var session in program.Sessions)
+                    {
+                        session.Volume += 0.01f;
+                    }
+                    return;
+                }
+            }
+        }
+
+        public void VolumeDown(string name)
+        {
+            foreach (var program in programs)
+            {
+                if (name == program.Name)
+                {
+                    foreach (var session in program.Sessions)
+                    {
+                        session.Volume -= 0.01f;
+                    }
+                    return;
+                }
+            }
+        }
+
+        public void SetMute(string name, bool mute)
+        {
+            foreach (var program in programs)
+            {
+                if (name == program.Name)
+                {
+                    foreach (var session in program.Sessions)
+                    {
+                        session.Mute = mute;
+                    }
+                    return;
+                }
+            }
+        }
 
 
         internal class AudioNotification : IAudioNotification
@@ -65,37 +113,37 @@ namespace AudioMixer
 
             public void OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason)
             {
-
+                Console.WriteLine("1");
             }
 
             public void OnDisplayNameChanged([MarshalAs(UnmanagedType.LPWStr)] string NewDisplayName, [MarshalAs(UnmanagedType.LPStruct)] Guid EventContext)
             {
-
+                Console.WriteLine("2");
             }
 
             public void OnIconPathChanged([MarshalAs(UnmanagedType.LPWStr)] string NewIconPath, [MarshalAs(UnmanagedType.LPStruct)] Guid EventContext)
             {
-
+                Console.WriteLine("3");
             }
 
             public void OnSimpleVolumeChanged(float NewVolume, bool NewMute, [MarshalAs(UnmanagedType.LPStruct)] Guid EventContext)
             {
-                
+                Console.WriteLine("4");
             }
 
             public void OnChannelVolumeChanged(int ChannelCount, IntPtr NewChannelVolumeArray, int ChangedChannel, [MarshalAs(UnmanagedType.LPStruct)] Guid EventContext)
             {
-                
+                Console.WriteLine("5");
             }
 
             public void OnGroupingParamChanged([MarshalAs(UnmanagedType.LPStruct)] Guid NewGroupingParam, [MarshalAs(UnmanagedType.LPStruct)] Guid EventContext)
             {
-               
+                Console.WriteLine("6");
             }
 
             public void OnStateChanged(AudioSessionState NewState)
             {
-              
+                Console.WriteLine("7");
             }
 
         }

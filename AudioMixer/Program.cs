@@ -7,47 +7,46 @@ using Audio;
 
 namespace AudioMixer
 {
-  internal class Program
+    internal static class Program
     {
         [MTAThread]
         static void Main(string[] args)
         {
-
-           /*    
-            foreach (AudioSession session in AudioUtilities.GetAllSessions())
-            {
-                if (session.Process != null)
-                {
-                    Console.WriteLine("Path: " + session.Process.MainModule.FileName + "| Process Name: " + session.Process.ProcessName);
-                    string fileName = Path.GetFileName(session.Process.MainModule.FileName);
-                    if (fileName == "firefox.exe")
-                    {
-                        session.Volume = 100;
-                    }
-                }
-            }
-        */
+             foreach (AudioSession session in AudioUtilities.GetAllSessions())
+             {
+                 if (session.Process != null)
+                 {
+                     Console.WriteLine("Path: " + session.Process.MainModule.FileName + "| Process Name: " + session.Process.ProcessName);
+                 }
+             }
+         
             AudioController controller = new AudioController();
+            controller.AddProgram("WMPlayer", @"C:\Program Files (x86)\Windows Media Player\wmplayer.exe");
 
-            
 
-
-            Console.ReadKey();
-            /*
-            while (true)
+            ConsoleKeyInfo keyInfo;
+            do
             {
-                ConsoleKeyInfo keyInfo = Console.ReadKey();
-                switch (keyInfo.Key)
-                {
-                    case ConsoleKey.UpArrow: 
-                        se
-                }
-            }
-            */
-        }
+                keyInfo = Console.ReadKey(true);
 
-        
-       
+                if (keyInfo.Key == ConsoleKey.UpArrow)
+                {
+                    controller.VolumeUp("WMPlayer");
+                    continue;
+                }
+
+                if (keyInfo.Key == ConsoleKey.DownArrow)
+                {
+                    controller.VolumeDown("WMPlayer");
+                    continue;
+                }
+
+
+
+            } while (keyInfo.Key != ConsoleKey.Escape);
+
+
+        }
     }
 
 
