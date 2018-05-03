@@ -9,7 +9,7 @@ using static Audio.AudioUtilities;
 
 namespace Audio
 {
-    class AudioController
+    public class AudioController
     {
         private List<Program> programs = new List<Program>();
 
@@ -22,6 +22,11 @@ namespace Audio
 
         public void AddProgram(string name, string exePath)
         {
+            foreach (var program in programs)
+                if (program.Name == name)
+                    return;
+               
+            
             programs.Add(new Program(name, exePath));
             IList<AudioSession> sessions = AudioUtilities.GetAllSessions();
             foreach (var program in programs)
@@ -68,6 +73,40 @@ namespace Audio
                     return;
                 }
             }
+        }
+        public void VolumeSet(string name, int volume)
+        {
+            foreach (var program in programs)
+            {
+                if (name == program.Name)
+                {
+                    foreach (var session in program.Sessions)
+                    {
+                        session.Volume = volume / 100f;
+                    }
+                    return;
+                }
+            }
+        }
+
+        public int CurrentVolume(string name)
+        {
+            foreach (var program in programs)
+            {
+                if (name == program.Name)
+                {
+                    float min = 1;
+                    foreach (var session in program.Sessions)
+                    {
+                        if (session.Volume < min)
+                        {
+                            min = session.Volume;
+                        }
+                    }
+                    return (int)(min * 100);
+                }
+            }
+            return 0;
         }
 
         public void SetMute(string name, bool mute)

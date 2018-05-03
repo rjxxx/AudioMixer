@@ -5,13 +5,14 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{2EA738C5-9B4F-4172-8A86-F12941E26AA9}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AudioMixer</RootNamespace>
     <AssemblyName>AudioMixer</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <LangVersion>5</LangVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -23,6 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <LangVersion>7.0</LangVersion>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -33,11 +35,18 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <LangVersion>7.0</LangVersion>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -48,10 +57,32 @@
     <Compile Include="Audio\AudioSessionDisconnectReason.cs" />
     <Compile Include="Audio\AudioSessionState.cs" />
     <Compile Include="Audio\AudioUtilities.cs" />
+    <Compile Include="MailForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MailForm.Designer.cs">
+      <DependentUpon>MailForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
+    <Compile Include="UsbLibrary\HIDDevice.cs" />
+    <Compile Include="UsbLibrary\Reports\Report.cs" />
+    <Compile Include="UsbLibrary\Reports\SpecifiedFeatureReport.cs" />
+    <Compile Include="UsbLibrary\Reports\SpecifiedInputReport.cs" />
+    <Compile Include="UsbLibrary\Reports\SpecifiedOutputReport.cs" />
+    <Compile Include="UsbLibrary\SpecifiedDevice.cs" />
+    <Compile Include="UsbLibrary\UsbHidPort.cs" />
+    <Compile Include="UsbLibrary\Win32Usb.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MailForm.resx">
+      <DependentUpon>MailForm.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
