@@ -8,91 +8,92 @@ using System.Windows.Forms;
 
 namespace UsbLibrary
 {
-    public class UsbHidPort
-    {
-        private int product_id;
-        private int vendor_id;
-        private Guid device_class;
-        private IntPtr usb_event_handle;
-        private SpecifiedDevice specified_device;
-        private IntPtr handle;
-        private string device_product = null;
+    /// <summary>
+    /// This class provides an usb component. This can be placed ont to your form.
+    /// </summary>
 
-        #region События 
+    public partial class UsbHidPort
+    {
+        //private memebers
+        private int                             product_id;
+        private int                             vendor_id;
+        private Guid                            device_class;
+        private IntPtr                          usb_event_handle;
+        private SpecifiedDevice                 specified_device;
+        private IntPtr                          handle;
+        //events
         /// <summary>
-        /// Событие, срабатывающее при подключении устройства с указанными PID, VID.
+        /// This event will be triggered when the device you specified is pluged into your usb port on
+        /// the computer. And it is completly enumerated by windows and ready for use.
         /// </summary>
-        [Description("Событие, срабатывающее при подключении устройства с указанными PID, VID")]
+        [Description("The event that occurs when a usb hid device with the specified vendor id and product id is found on the bus")]
         [Category("Embedded Event")]
         [DisplayName("OnSpecifiedDeviceArrived")]
         public event EventHandler               OnSpecifiedDeviceArrived;
 
         /// <summary>
-        /// Событие, срабатывающее при отключении устройства с указанными PID, VID.
+        /// This event will be triggered when the device you specified is removed from your computer.
         /// </summary>
-        [Description("Событие, срабатывающее при отключении устройства с указанными PID, VID")]
+        [Description("The event that occurs when a usb hid device with the specified vendor id and product id is removed from the bus")]
         [Category("Embedded Event")]
         [DisplayName("OnSpecifiedDeviceRemoved")]
         public event EventHandler               OnSpecifiedDeviceRemoved;
 
         /// <summary>
-        /// Событие, срабатывающее при подключении любого USB-устройства.
+        /// This event will be triggered when a device is pluged into your usb port on
+        /// the computer. And it is completly enumerated by windows and ready for use.
         /// </summary>
-        [Description("Событие, срабатывающее при подключении любого USB-устройства")]
+        [Description("The event that occurs when a usb hid device is found on the bus")]
         [Category("Embedded Event")]
         [DisplayName("OnDeviceArrived")]
         public event EventHandler               OnDeviceArrived;
 
         /// <summary>
-        /// Событие, срабатывающее при отключении любого USB-устройства.
+        /// This event will be triggered when a device is removed from your computer.
         /// </summary>
-        [Description("Событие, срабатывающее при отключении любого USB-устройства")]
+        [Description("The event that occurs when a usb hid device is removed from the bus")]
         [Category("Embedded Event")]
         [DisplayName("OnDeviceRemoved")]
         public event EventHandler               OnDeviceRemoved;
 
         /// <summary>
-        /// Событие, срабатывающее при получении данных от выбранного USB-устройства.
+        /// This event will be triggered when data is recieved from the device specified by you.
         /// </summary>
-        [Description("Событие, срабатывающее при получении данных от выбранного USB-устройства")]
+        [Description("The event that occurs when data is recieved from the embedded system")]
         [Category("Embedded Event")]
         [DisplayName("OnDataRecieved")]
         public event DataRecievedEventHandler   OnDataRecieved;
 
         /// <summary>
-        /// Событие, срабатывающее при отправке данных к выбранному USB-устройству. 
-        /// Будет вызванно только при успешной отправке данных.
+        /// This event will be triggered when data is send to the device. 
+        /// It will only occure when this action wass succesfull.
         /// </summary>
-        [Description("Событие, срабатывающее при отправке данных к выбранному USB-устройству")]
+        [Description("The event that occurs when data is send from the host to the embedded system")]
         [Category("Embedded Event")]
         [DisplayName("OnDataSend")]
         public event EventHandler               OnDataSend;
-        public event EventHandler Disposed;
-        #endregion
 
-        #region Конструкторы
         public UsbHidPort()
         {
+            //initializing in initial state
             product_id = 0;
             vendor_id = 0;
             specified_device = null;
-            device_product = null;
             device_class = Win32Usb.HIDGuid;
+
+          
         }
+       
 
-        #endregion
-
-        #region Публичные свойства
-        [Description("Это Product ID выбранного USB устройства")]
+        [Description("The product id from the USB device you want to use")]
         [DefaultValue("(none)")]
         [Category("Embedded Details")]
-        public int ProductId
-        {
+        public int ProductId{
             get { return this.product_id; }
             set { this.product_id = value; }
         }
 
-       [Description("Это Vendor ID выбранного USB устройства")]
+       [Description("The vendor id from the USB device you want to use")]
        [DefaultValue("(none)")]
        [Category("Embedded Details")]
         public int VendorId
@@ -101,7 +102,7 @@ namespace UsbLibrary
             set { this.vendor_id = value; }
         }
 
-        [Description("Это класс устройства, к которому относится USB-устройства")]
+        [Description("The Device Class the USB device belongs to")]
         [DefaultValue("(none)")]
         [Category("Embedded Details")]
         public Guid DeviceClass
@@ -109,7 +110,7 @@ namespace UsbLibrary
             get { return device_class; }
         }
 
-        [Description("Устройство, которое описывает установленный экземпляр")]
+        [Description("The Device witch applies to the specifications you set")]
         [DefaultValue("(none)")]
         [Category("Embedded Details")]
         public SpecifiedDevice SpecifiedDevice
@@ -117,25 +118,30 @@ namespace UsbLibrary
             get { return this.specified_device; }
         }
 
-        public ISite Site { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        #endregion
-
-        #region Базовые функции 
         /// <summary>
-        /// Регистрация для получения событий USB-шины.  
+        /// Registers this application, so it will be notified for usb events.  
         /// </summary>
-        /// <param name="Handle">= IntPtr, путь до приложения.</param>
-        public void RegisterHandle(IntPtr Handle)
-        {
+        /// <param name="Handle">a IntPtr, that is a handle to the application.</param>
+        /// <example> This sample shows how to implement this method in your form.
+        /// <code> 
+        ///protected override void OnHandleCreated(EventArgs e)
+        ///{
+        ///    base.OnHandleCreated(e);
+        ///    usb.RegisterHandle(Handle);
+        ///}
+        ///</code>
+        ///</example>
+        public void RegisterHandle(IntPtr Handle){
             usb_event_handle = Win32Usb.RegisterForUsbEvents(Handle, device_class);
             this.handle = Handle;
+            //Check if the device is already present.
             CheckDevicePresent();
         }
 
         /// <summary>
-        /// Отмена регистрации для получения событий USB-шины, это приложение не будет на них реагировать. 
+        /// Unregisters this application, so it won't be notified for usb events.  
         /// </summary>
-        /// <returns>Возвращает true - если успешно.</returns>
+        /// <returns>Returns if it wass succesfull to unregister.</returns>
         public bool UnregisterHandle()
         {
             if (this.handle != null)
@@ -151,31 +157,25 @@ namespace UsbLibrary
         /// And parse them and take the appropriate action 
         /// </summary>
         /// <param name="m">a ref to Messages, The messages that are thrown by windows to the application.</param>
-        public void ParseMessages(ref Message m)
+        /// <example> This sample shows how to implement this method in your form.
+        /// <code> 
+        ///protected override void WndProc(ref Message m)
+        ///{
+        ///    usb.ParseMessages(ref m);
+        ///    base.WndProc(ref m);	    // pass message on to base form
+        ///}
+        ///</code>
+        ///</example>
+        public void ParseMessages(int msg, IntPtr wParam)
         {
-            ParseMessages(m.Msg, m.WParam);
-        }
-
-        /// <summary>
-        /// This method will filter the messages that are passed for usb device change messages only. 
-        /// And parse them and take the appropriate action 
-        /// </summary>
-        /// <param name="m">a ref to Messages, The messages that are thrown by windows to the application.</param>
-        public void ParseMessages(int Msg, IntPtr WParam)
-        { 
-            if (Msg == Win32Usb.WM_DEVICECHANGE)	// we got a device change message! A USB device was inserted or removed
+            if (msg == Win32Usb.WM_DEVICECHANGE)	// we got a device change message! A USB device was inserted or removed
             {
-                switch (WParam.ToInt32())	// Check the W parameter to see if a device was inserted or removed
+                switch (wParam.ToInt32())	// Check the W parameter to see if a device was inserted or removed
                 {
                     case Win32Usb.DEVICE_ARRIVAL:	// inserted
                         if (OnDeviceArrived != null)
                         {
                             OnDeviceArrived(this, new EventArgs());
-                            CheckDevicePresent();
-                        }
-                        // Если подключенна обработка Только спец.девайса (иначе, без null события OnDeviceArrived не будет событий OnSpecifiedDeviceArrived)
-                        else if (OnSpecifiedDeviceArrived != null)
-                        {
                             CheckDevicePresent();
                         }
                         break;
@@ -185,22 +185,14 @@ namespace UsbLibrary
                             OnDeviceRemoved(this, new EventArgs());
                             CheckDevicePresent();
                         }
-                        // Если подключенна обработка Только спец.девайса (аналогично верхнему)
-                        // Данный косяк был замечен в оригинальной библиотеке, на которой базируется эта :)
-                        else if (OnSpecifiedDeviceRemoved != null)
-                        {
-                            CheckDevicePresent();
-                        }
-                        break;
-
-                    default:
                         break;
                 }
             }
         }
 
         /// <summary>
-        /// Проверяет, есть ли на шине USB устройство с указанными PID, VID.
+        /// Checks the devices that are present at the moment and checks if one of those
+        /// is the device you defined by filling in the product id and vendor id.
         /// </summary>
         public void CheckDevicePresent()
         {
@@ -208,21 +200,18 @@ namespace UsbLibrary
             {
                 //Mind if the specified device existed before.
                 bool history = false;
-
-                if(specified_device != null )
-                {       
+                if(specified_device != null ){
                     history = true;
                 }
 
-                specified_device = SpecifiedDevice.FindSpecifiedDevice(this.vendor_id, this.product_id, device_product);
-                
-                if (specified_device != null)	// нашлось?
+                specified_device = SpecifiedDevice.FindSpecifiedDevice(this.vendor_id, this.product_id);	// look for the device on the USB bus
+                if (specified_device != null)	// did we find it?
                 {
                     if (OnSpecifiedDeviceArrived != null)
                     {
                         this.OnSpecifiedDeviceArrived(this, new EventArgs());
-                        if (OnDataRecieved != null) specified_device.DataRecieved += new DataRecievedEventHandler(OnDataRecieved);
-                        if (OnDataSend != null) specified_device.DataSend += new DataSendEventHandler(OnDataSend);
+                        specified_device.DataRecieved += new DataRecievedEventHandler(OnDataRecieved);
+                        specified_device.DataSent += new DataSendEventHandler(OnDataSend);
                     }
                 }
                 else
@@ -241,8 +230,7 @@ namespace UsbLibrary
 
         private void DataRecieved(object sender, DataRecievedEventArgs args)
         {
-            if(this.OnDataRecieved != null)
-            {
+            if(this.OnDataRecieved != null){
                 this.OnDataRecieved(sender, args);
             }
         }
@@ -254,244 +242,6 @@ namespace UsbLibrary
                 this.OnDataSend(sender, args);
             }
         }
-        #endregion 
-
-        #region Подключение\отключение\информация об устройстве
-        /// <summary>
-        /// Проверяем (мнимую) готовность устройства к работе.
-        /// </summary>
-        /// <returns>Возвращает True, если устройство готово,иначе False</returns>
-        public bool Ready()
-        {
-            if (SpecifiedDevice != null)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Закрываем текущее подключение к устройству, если есть таковое.
-        /// </summary>
-        public void Close()
-        {
-            if (specified_device != null)
-            {
-                specified_device.Dispose();
-                specified_device = null;
-                if (OnSpecifiedDeviceRemoved != null)
-                    this.OnSpecifiedDeviceRemoved(this, new EventArgs());
-            }
-        }
-
-        /// <summary>
-        /// Проверка подключения и поддержание в открытом состоянии доступа к устройству.
-        /// Подключение к первому подходящему устройству по PID\VID при условии, что
-        /// DeviceProduct = null
-        /// </summary>
-        /// <param name="OpenState">Если надо поддерживать связь, то True</param>
-        /// <returns>Возвращает True - если устройство успешно найденно, иначе False</returns>
-        public bool Open(bool OpenState)
-        {
-            bool success = true;
-            device_product = null;
-
-            if (OpenState)
-            {
-                CheckDevicePresent();
-
-                if (SpecifiedDevice == null)
-                {
-                    success = false;
-                }
-            }
-            else
-            {
-                CheckDevicePresent();
-
-                if (SpecifiedDevice != null)
-                {
-                    specified_device.Dispose();
-                    specified_device = null;
-                    this.OnSpecifiedDeviceRemoved(this, new EventArgs());
-                }
-                else
-                {
-                    success = false;
-                }
-            }
-            return success;
-        }
-
-        /// <summary>
-        /// Проверка подключения и поддержание в открытом состоянии доступа к устройству.
-        /// Переподключение к устройству с подходящими PID\VID и соответствующим DeviceProduct
-        /// </summary>
-        /// <param name="OpenState">Если надо поддерживать связь, то True</param>
-        /// <param name="Product">Указываем сюда глобальную константу DeviceProduct, с описанием продукта</param>
-        /// <returns>Возвращает True - если устройство успешно найденно, иначе False</returns>
-        public bool Open(bool OpenState, string Product)
-        {
-            bool success = true;
-
-            if (OpenState)
-            {
-                CheckDevicePresent();
-
-                if (SpecifiedDevice == null)
-                {
-                    success = false;
-                }
-            }
-            else
-            {
-                CheckDevicePresent();
-
-                if (SpecifiedDevice != null)
-                {
-                    specified_device.Dispose();
-                    specified_device = null;
-                    this.OnSpecifiedDeviceRemoved(this, new EventArgs());
-                }
-                else
-                {
-                    success = false;
-                }
-            }
-            return success;
-        }
-
-        /// <summary>
-        /// Переопределение строки продукта для устройства.
-        /// При вызове происходит закрытие текущего подключения (если есть), далее происходит поиск и подключение к устройству с новыми параметрами.
-        /// </summary>
-        /// <param name="DevPrd">Указываем сюда глобальную константу DeviceProduct, с описанием продукта</param>
-        /// <returns>Возвращает True - если устройство успешно найденно, иначе False</returns>
-        public bool UpdateDeviceProduct(string Product)
-        {
-            bool success = true;
-
-            if (specified_device != null)
-            {
-                specified_device.Dispose();
-                specified_device = null;
-                if (OnSpecifiedDeviceRemoved != null)
-                    this.OnSpecifiedDeviceRemoved(this, new EventArgs());
-            }
-
-            device_product = Product;
-
-            CheckDevicePresent();
-
-            if (SpecifiedDevice == null)
-            {
-                success = false;
-            }
-
-            return success;
-        }
-
-
-        /// <summary>
-        /// Чтение строк производителя и продукта из девайса.
-        /// </summary>
-        /// <param name="Manufacturer">Производитель</param>
-        /// <param name="Product">Продукт</param>
-        /// <returns>Возвращает True в случае успешного чтения обоих строк, иначе False</returns>
-        public bool GetInfoStrings(ref string Manufacturer, ref string Product)
-        {
-            if (specified_device.GetManufacturerString(ref Manufacturer) &&
-                specified_device.GetProductString(ref Product))
-                return true;
-            else
-                return false;
-        }
-        #endregion
-
-        #region Write Reports
-
-        /// <summary>
-        /// Записываем Output Report в девайс.
-        /// </summary>
-        /// <param name="ID">Report ID</param>
-        /// <param name="data">Report Data</param>
-        /// <returns>Возвращает True, если успешно отправленны данные,иначе False</returns>
-        public bool WriteOutputReport(byte ID, byte[] data)
-        {
-            bool success = false;
-            byte[] Report = new byte[specified_device.OutputReportLength];
-
-            // Проверяем, влазит ли пакет данных
-            try
-            {
-                Report[0] = ID;
-                Array.Copy(data, Report, data.Length);
-                success = true;
-            }
-            catch(Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-
-            if (success)
-            {
-                try
-                {
-                    SpecifiedDevice.SendData(Report);
-                }
-                catch
-                {
-                    success = false;
-                }
-            }
-            return success;
-        }
-
-        /// <summary>
-        /// Записываем Feature Report в девайс.
-        /// </summary>
-        /// <param name="ID">Report ID</param>
-        /// <param name="data">Report Data to Write</param>
-        /// <param name="rdata">Report Data Received</param>
-        /// <returns>Возвращает True, если успешно отправленны и полученны данные,иначе False</returns>
-        public bool WriteFeatureReport(byte ID, byte[] data, ref byte[] rdata)
-        {
-            bool success = true;
-            byte[] Report = new byte[specified_device.FeatureReportLength];
-            
-            // Проверяем, влазит ли пакет данных
-            try
-            {
-                Report[0] = ID;
-                Array.Copy(data, 0, Report, 1, data.Length);
-            }
-            catch
-            {
-                success = false;
-            }
-            
-            if (success)
-            {
-                try
-                {
-                    rdata = new byte[specified_device.FeatureReportLength];
-                    rdata = specified_device.SendFeature(Report, ref success);
-                }
-                catch
-                {
-                    success = false;
-                }
-            }
-            return success;
-        }
-
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-        #endregion
+    
     }
 }

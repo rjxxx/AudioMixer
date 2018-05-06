@@ -23,8 +23,13 @@ namespace Audio
         public void AddProgram(string name, string exePath)
         {
             foreach (var program in programs)
+            {
                 if (program.Name == name)
-                    return;
+                {
+                    programs.Remove(program);
+                    break;
+                }
+            }
                
             
             programs.Add(new Program(name, exePath));
@@ -204,6 +209,13 @@ namespace Audio
 
             public void AddSession(AudioSession session)
             {
+                foreach(var audioSession in Sessions)
+                {
+                    if (audioSession == null || audioSession.State == AudioSessionState.Expired)
+                    {
+                        Sessions.Remove(audioSession);
+                    }
+                }
                 Sessions.Add(session);
             }
 

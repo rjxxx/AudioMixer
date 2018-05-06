@@ -33,7 +33,7 @@ namespace UsbLibrary
             public int Size;
             public Guid InterfaceClassGuid;
             public int Flags;
-            public int Reserved;
+            public IntPtr Reserved;
         }
 		/// <summary>
 		/// Provides the capabilities of a HID device
@@ -72,7 +72,7 @@ namespace UsbLibrary
 		/// <summary>
 		/// Used when registering a window to receive messages about devices added or removed from the system.
 		/// </summary>
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 1)]
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 0)]
         public class DeviceBroadcastInterface
         {
             public int Size;
@@ -82,6 +82,13 @@ namespace UsbLibrary
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
             public string Name;
         }		
+
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct DevicePropertyKey
+        {
+            public Guid propertyCategory;
+            public int propertyId;
+        }
         #endregion
 
         #region Constants
@@ -93,10 +100,8 @@ namespace UsbLibrary
 		public const int DEVICE_REMOVECOMPLETE = 0x8004;
 		/// <summary>Used in SetupDiClassDevs to get devices present in the system</summary>
         protected const int DIGCF_PRESENT = 0x02;
-
-        protected const int DIGCF_ALLCLASSES = 0x04;
-        /// <summary>Used in SetupDiClassDevs to get device interface details</summary>
-        protected const int DIGCF_DEVICEINTERFACE = 0x10;
+		/// <summary>Used in SetupDiClassDevs to get device interface details</summary>
+		protected const int DIGCF_DEVICEINTERFACE = 0x10;
 		/// <summary>Used when registering for device insert/remove messages : specifies the type of device</summary>
 		protected const int DEVTYP_DEVICEINTERFACE = 0x05;
 		/// <summary>Used when registering for device insert/remove messages : we're giving the API call a window handle</summary>
@@ -134,16 +139,12 @@ namespace UsbLibrary
         #endregion
 
         #region P/Invoke
-		
-        
-        /// <summary>
+		/// <summary>
 		/// Gets the GUID that Windows uses to represent HID class devices
 		/// </summary>
 		/// <param name="gHid">An out parameter to take the Guid</param>
         [DllImport("hid.dll",      SetLastError = true)] protected static extern void HidD_GetHidGuid(out Guid gHid);
-		
-        
-        /// <summary>
+		/// <summary>
 		/// Allocates an InfoSet memory block within Windows that contains details of devices.
 		/// </summary>
 		/// <param name="gClass">Class guid (e.g. HID guid)</param>
@@ -152,17 +153,13 @@ namespace UsbLibrary
 		/// <param name="nFlags">Type of device details required (DIGCF_ constants)</param>
 		/// <returns>A reference to the InfoSet</returns>
         [DllImport("setupapi.dll", SetLastError = true)] protected static extern IntPtr SetupDiGetClassDevs(ref Guid gClass, [MarshalAs(UnmanagedType.LPStr)] string strEnumerator, IntPtr hParent, uint nFlags);
-		
-        
-        /// <summary>
+		/// <summary>
 		/// Frees InfoSet allocated in call to above.
 		/// </summary>
 		/// <param name="lpInfoSet">Reference to InfoSet</param>
 		/// <returns>true if successful</returns>
 		[DllImport("setupapi.dll", SetLastError = true)] protected static extern int SetupDiDestroyDeviceInfoList(IntPtr lpInfoSet);
-		
-        
-        /// <summary>
+		/// <summary>
 		/// Gets the DeviceInterfaceData for a device from an InfoSet.
 		/// </summary>
 		/// <param name="lpDeviceInfoSet">InfoSet to access</param>
@@ -172,9 +169,7 @@ namespace UsbLibrary
 		/// <param name="oInterfaceData">DeviceInterfaceData to fill with data</param>
 		/// <returns>True if successful, false if not (e.g. when index is passed end of InfoSet)</returns>
         [DllImport("setupapi.dll", SetLastError = true)] protected static extern bool SetupDiEnumDeviceInterfaces(IntPtr lpDeviceInfoSet, uint nDeviceInfoData, ref Guid gClass, uint nIndex, ref DeviceInterfaceData oInterfaceData);
-		
-        
-        /// <summary>
+		/// <summary>
 		/// SetupDiGetDeviceInterfaceDetail
 		/// Gets the interface detail from a DeviceInterfaceData. This is pretty much the device path.
 		/// You call this twice, once to get the size of the struct you need to send (nDeviceInterfaceDetailDataSize=0)
@@ -188,8 +183,6 @@ namespace UsbLibrary
 		/// <param name="lpDeviceInfoData">Not used</param>
 		/// <returns></returns>
         [DllImport("setupapi.dll", SetLastError = true)] protected static extern bool SetupDiGetDeviceInterfaceDetail(IntPtr lpDeviceInfoSet, ref DeviceInterfaceData oInterfaceData, IntPtr lpDeviceInterfaceDetailData, uint nDeviceInterfaceDetailDataSize, ref uint nRequiredSize, IntPtr lpDeviceInfoData);
-        
-        
         /// <summary>
         /// SetupDiGetDeviceInterfaceDetail
         /// Gets the interface detail from a DeviceInterfaceData. This is pretty much the device path.
@@ -204,116 +197,75 @@ namespace UsbLibrary
         /// <param name="lpDeviceInfoData">Not used</param>
         /// <returns></returns>
         [DllImport("setupapi.dll", SetLastError = true)] protected static extern bool SetupDiGetDeviceInterfaceDetail(IntPtr lpDeviceInfoSet, ref DeviceInterfaceData oInterfaceData, ref DeviceInterfaceDetailData oDetailData, uint nDeviceInterfaceDetailDataSize, ref uint nRequiredSize, IntPtr lpDeviceInfoData);
-		
-        
         /// <summary>
-		/// Registers a window for device insert/remove messages
-		/// </summary>
-		/// <param name="hwnd">Handle to the window that will receive the messages</param>
+        /// Gets device details
+        /// </summary>
+        /// <param name="lpDeviceInfoSet">InfoSet to access</param>
+        /// <param name="nIndex">device index in InfoSet</param>
+        /// <param name="oDeviceData">struct to fill with data</param>
+        /// <returns><see langword="true"/> if successful, <see langword="false"/> if not</returns>
+        [DllImport("setupapi.dll", SetLastError = true)] protected static extern bool SetupDiEnumDeviceInfo(IntPtr lpDeviceInfoSet, uint nIndex, ref DeviceInterfaceData oDeviceData);
+
+	    [DllImport("Cfgmgr32.dll")] protected static extern uint CM_Locate_DevNode(out uint childHandle, uint pointerToNodeID, uint flags);
+        [DllImport("Cfgmgr32.dll")] protected static extern uint CM_Get_Parent(out uint childHandle, uint handle, uint flags);
+        [DllImport("Cfgmgr32.dll")] protected static extern uint CM_Get_Child(out uint childHandle, uint handle, uint flags);
+        [DllImport("Cfgmgr32.dll")] protected static extern uint CM_Get_Device_ID_Size(out uint size, uint deviceHandle, uint flags);
+        [DllImport("Cfgmgr32.dll")] protected static extern uint CM_Get_Device_ID(uint deviceHandle, byte[] buffer, uint bufferLength, uint flags);
+
+        /// <summary>
+        /// Registers a window for device insert/remove messages
+        /// </summary>
+        /// <param name="hwnd">Handle to the window that will receive the messages</param>
         /// <param name="oInterface">DeviceBroadcastInterrface structure</param>
-		/// <param name="nFlags">set to DEVICE_NOTIFY_WINDOW_HANDLE</param>
-		/// <returns>A handle used when unregistering</returns>
+        /// <param name="nFlags">set to DEVICE_NOTIFY_WINDOW_HANDLE</param>
+        /// <returns>A handle used when unregistering</returns>
         [DllImport("user32.dll",   SetLastError = true)] protected static extern IntPtr RegisterDeviceNotification(IntPtr hwnd, DeviceBroadcastInterface oInterface, uint nFlags);
-		
-        
-        /// <summary>
+		/// <summary>
 		/// Unregister from above.
 		/// </summary>
 		/// <param name="hHandle">Handle returned in call to RegisterDeviceNotification</param>
 		/// <returns>True if success</returns>
         [DllImport("user32.dll",   SetLastError = true)] protected static extern bool UnregisterDeviceNotification(IntPtr hHandle);
-		
-        
-        /// <summary>
+		/// <summary>
 		/// Gets details from an open device. Reserves a block of memory which must be freed.
 		/// </summary>
 		/// <param name="hFile">Device file handle</param>
 		/// <param name="lpData">Reference to the preparsed data block</param>
 		/// <returns></returns>
 		[DllImport("hid.dll",      SetLastError = true)] protected static extern bool HidD_GetPreparsedData(IntPtr hFile, out IntPtr lpData);
-		
-        
-        /// <summary>
+		/// <summary>
 		/// Frees the memory block reserved above.
 		/// </summary>
 		/// <param name="pData">Reference to preparsed data returned in call to GetPreparsedData</param>
 		/// <returns></returns>
 		[DllImport("hid.dll",      SetLastError = true)] protected static extern bool HidD_FreePreparsedData(ref IntPtr pData);
-		
-        
-        /// <summary>
+		/// <summary>
 		/// Gets a device's capabilities from the preparsed data.
 		/// </summary>
 		/// <param name="lpData">Preparsed data reference</param>
 		/// <param name="oCaps">HidCaps structure to receive the capabilities</param>
 		/// <returns>True if successful</returns>
 		[DllImport("hid.dll",      SetLastError = true)] protected static extern int HidP_GetCaps(IntPtr lpData, out HidCaps oCaps);
-		
-
-
-        /* ********************************************************* Добавленны для работы с Feature Reports ********************************************************* */
-        /* *********************************************************************************************************************************************************** */
-        [DllImport("hid.dll", SetLastError = true)]
-        internal static extern Boolean HidD_SetFeature(IntPtr hFile, Byte[] lpReportBuffer, Int32 ReportBufferLength);
-
-        [DllImport("hid.dll", SetLastError = true)]
-        internal static extern Boolean HidD_GetFeature(IntPtr hFile, Byte[] lpReportBuffer, Int32 ReportBufferLength);
-
-
-        // TO DO
-        /*
-         Vendor Name / Product Name 	 
-
-         HidD_GetManufacturerString
-         HidD_GetProductString
-         HidD_GetSerialNumberString
-
-         и так ж по идее 
-
-         HidD_GetIndexedString
-         * 
-        */
-
-        
-        [DllImport("hid.dll", SetLastError = true)]
-        internal static extern Boolean HidD_GetManufacturerString(IntPtr hFile, Byte[] Buffer, Int32 BufferLength);
-
-        [DllImport("hid.dll", SetLastError = true)]
-        internal static extern Boolean HidD_GetProductString(IntPtr hFile, Byte[] Buffer, Int32 BufferLength);
-
-        /*
-        [DllImport("hid.dll", SetLastError = true)]
-        internal static extern Boolean HidD_GetSerialNumberString(IntPtr hFile, Byte[] Buffer, Int32 BufferLength);
-
-        [DllImport("hid.dll", SetLastError = true)]
-        internal static extern Boolean HidD_GetIndexedString(IntPtr hFile, Int32 StringIndex, Byte[] Buffer, Int32 BufferLength);
-        */
-        /* *********************************************************************************************************************************************************** */
-        /* *********************************************************************************************************************************************************** */
-
-        /// <summary>
-        /// Creates/opens a file, serial port, USB device... etc
-        /// </summary>
-        /// <param name="strName">Path to object to open</param>
-        /// <param name="nAccess">Access mode. e.g. Read, write</param>
-        /// <param name="nShareMode">Sharing mode</param>
-        /// <param name="lpSecurity">Security details (can be null)</param>
-        /// <param name="nCreationFlags">Specifies if the file is created or opened</param>
-        /// <param name="nAttributes">Any extra attributes? e.g. open overlapped</param>
-        /// <param name="lpTemplate">Not used</param>
-        /// <returns></returns>
-        [DllImport("kernel32.dll", SetLastError = true)] protected static extern IntPtr CreateFile([MarshalAs(UnmanagedType.LPStr)] string strName, uint nAccess, uint nShareMode, IntPtr lpSecurity, uint nCreationFlags, uint nAttributes, IntPtr lpTemplate);
-		
-        
-        /// <summary>
+		/// <summary>
+		/// Creates/opens a file, serial port, USB device... etc
+		/// </summary>
+		/// <param name="strName">Path to object to open</param>
+		/// <param name="nAccess">Access mode. e.g. Read, write</param>
+		/// <param name="nShareMode">Sharing mode</param>
+		/// <param name="lpSecurity">Security details (can be null)</param>
+		/// <param name="nCreationFlags">Specifies if the file is created or opened</param>
+		/// <param name="nAttributes">Any extra attributes? e.g. open overlapped</param>
+		/// <param name="lpTemplate">Not used</param>
+		/// <returns></returns>
+		[DllImport("kernel32.dll", SetLastError = true)] protected static extern IntPtr CreateFile([MarshalAs(UnmanagedType.LPStr)] string strName, uint nAccess, uint nShareMode, IntPtr lpSecurity, uint nCreationFlags, uint nAttributes, IntPtr lpTemplate);
+		/// <summary>
 		/// Closes a window handle. File handles, event handles, mutex handles... etc
 		/// </summary>
 		/// <param name="hFile">Handle to close</param>
 		/// <returns>True if successful.</returns>
-		[DllImport("kernel32.dll", SetLastError = true)] public static extern int CloseHandle(IntPtr hFile);
-
+		[DllImport("kernel32.dll", SetLastError = true)] protected static extern int CloseHandle(IntPtr hFile);
         #endregion
-
+        
 		#region Public methods
 		/// <summary>
 		/// Registers a window to receive windows messages when a device is inserted/removed. Need to call this
@@ -353,6 +305,17 @@ namespace UsbLibrary
                 //return new Guid("A5DCBF10-6530-11D2-901F-00C04FB951ED"); //gHid;
             }
         }
+
+        /// <summary>
+        /// Checks if system is 64bit.
+        /// May need better implementation
+        /// </summary>
+        /// <returns>true if system is 64-bit</returns>
+        public static bool Is64Bit()
+        {
+            return (IntPtr.Size > 4);
+        }
+
 		#endregion
     }
 }

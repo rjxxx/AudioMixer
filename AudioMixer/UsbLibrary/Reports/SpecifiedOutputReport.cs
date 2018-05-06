@@ -6,24 +6,28 @@ namespace UsbLibrary
 {
     public class SpecifiedOutputReport : OutputReport
     {
-        public SpecifiedOutputReport(HIDDevice oDev) : base(oDev) 
-        {
+        public SpecifiedOutputReport(HIDDevice oDev) : base(oDev) {
 
         }
 
         public bool SendData(byte[] data)
         {
+            if (data.Length > Buffer.Length - 1) throw new ArgumentException("has invalid length", nameof(data));
             byte[] arrBuff = Buffer; //new byte[Buffer.Length];
-            var len = data.Length < arrBuff.Length ? data.Length : arrBuff.Length;
-            for (int i = 0; i < arrBuff.Length; i++)
+            arrBuff[0] = 63;
+            int i = 1;
+            for (; i <= data.Length; i++)
             {
-                arrBuff[i] = (i < len ? data[i] : (byte)0x0);
+                arrBuff[i] = data[i - 1];
             }
-
+            if (i < Buffer.Length)
+            {
+                Array.Clear(Buffer, i, Buffer.Length - i);
+            }
             //Buffer = arrBuff;
 
             //returns false if the data does not fit in the buffer. else true
-            if (arrBuff.Length <= data.Length)
+            if (arrBuff.Length < data.Length)
             {
                 return false;
             }
@@ -33,4 +37,5 @@ namespace UsbLibrary
             }
         }
     }
+
 }
