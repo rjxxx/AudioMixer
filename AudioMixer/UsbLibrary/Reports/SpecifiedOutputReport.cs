@@ -14,7 +14,7 @@ namespace UsbLibrary
         {
             if (data.Length > Buffer.Length - 1) throw new ArgumentException("has invalid length", nameof(data));
             byte[] arrBuff = Buffer; //new byte[Buffer.Length];
-            arrBuff[0] = 63;
+            arrBuff[0] = 0;
             int i = 1;
             for (; i <= data.Length; i++)
             {
