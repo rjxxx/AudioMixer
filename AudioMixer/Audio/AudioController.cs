@@ -12,7 +12,15 @@ namespace Audio
     public class AudioController
     {
         private List<Program> programs = new List<Program>();
+        private float stepVolume = 0.01f;
 
+        public float StepVolume {
+            get => stepVolume;
+            set {
+                if (value > 0 && value <= 1f)
+                    stepVolume = value;
+            }
+        }
 
         public AudioController()
         {
@@ -58,7 +66,7 @@ namespace Audio
                 {
                     foreach (var session in program.Sessions)
                     {
-                        session.Volume += 0.01f;
+                        session.Volume += stepVolume;
                     }
                     return;
                 }
@@ -73,7 +81,7 @@ namespace Audio
                 {
                     foreach (var session in program.Sessions)
                     {
-                        session.Volume -= 0.01f;
+                        session.Volume -= stepVolume;
                     }
                     return;
                 }

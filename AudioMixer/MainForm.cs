@@ -27,11 +27,13 @@ namespace AudioMixer
         {
             InitializeComponent();
             Connect();
+            controller.StepVolume = 0.04f;
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-           
+            for (byte i = 1; i <= 3; i++)
+            usb.SpecifiedDevice.SendData(USBCommand.CreateCommandVolume(0, i));
         }
 
         #endregion
@@ -72,22 +74,26 @@ namespace AudioMixer
         {
             string programName = "";
             string programPath = OpenDialog();
+            byte numberProgram;
             TrackBar trackBar;
             Label label;
             switch (((Button)sender).Name)
             {
                 case "program_1_button":
                     programName = "Program1";
+                    numberProgram = 1;
                     label = label1;
                     trackBar = trackBar1;
                     break;
                 case "program_2_button":
                     programName = "Program2";
+                    numberProgram = 2;
                     label = label2;
                     trackBar = trackBar2;
                     break;
                 case "program_3_button":
                     programName = "Program3";
+                    numberProgram = 3;
                     label = label3;
                     trackBar = trackBar3;
                     break;
@@ -102,6 +108,7 @@ namespace AudioMixer
 
             controller.AddProgram(programName, programPath);
             trackBar.Value = controller.CurrentVolume(programName);
+            usb.SpecifiedDevice.SendData(USBCommand.CreateCommandVolume((byte)trackBar.Value, numberProgram));
             label.Text = programPath;
 
         }
@@ -239,7 +246,14 @@ namespace AudioMixer
                         byte volume = 0;
                         if (USBCommand.ParseCommandVolume(args.data, ref numberProgram, ref volume))
                         {
-                            controller.VolumeSet("Program" + numberProgram, volume);
+                            if (volume == 0)
+                            {
+                                controller.VolumeDown("Program" + numberProgram);
+                            } else if (volume == 1)
+                            {
+                                controller.VolumeUp("Program" + numberProgram);
+
+                            }
                             TrackBar trackBar;
                             switch (numberProgram)
                             {
@@ -255,7 +269,7 @@ namespace AudioMixer
                                 default:
                                     return;
                             }
-                            trackBar.Value = volume;
+                            trackBar.Value = controller.CurrentVolume("Program" + numberProgram);
                             usb.SpecifiedDevice.SendData(USBCommand.CreateCommandVolume((byte)trackBar.Value, numberProgram));
                         }
 
