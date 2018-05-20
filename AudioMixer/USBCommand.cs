@@ -27,13 +27,13 @@ namespace AudioMixer
             }
             return false;
         }
-        public static bool ParseCommandVolume(byte[] command, ref byte numberProgram, ref byte shift, ref byte rotation)
+        public static bool ParseCommandVolume(byte[] command, ref byte numberProgram, ref byte rotation, ref byte position)
         {
             if (command[1] == 1)
             {
                 numberProgram = command[2];
                 rotation = command[3];
-                shift = command[4];
+                position = command[4];
                 return true;
             }
             return false;

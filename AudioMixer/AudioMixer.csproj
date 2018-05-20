@@ -47,13 +47,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Audio\AudioController.cs" />
+    <Compile Include="AudioController.cs" />
     <Compile Include="Audio\AudioDevice.cs" />
     <Compile Include="Audio\AudioDeviceState.cs" />
     <Compile Include="Audio\AudioSession.cs" />
     <Compile Include="Audio\AudioSessionDisconnectReason.cs" />
     <Compile Include="Audio\AudioSessionState.cs" />
     <Compile Include="Audio\AudioUtilities.cs" />
+    <Compile Include="AudioProgram.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

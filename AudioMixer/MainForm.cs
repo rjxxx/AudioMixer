@@ -27,13 +27,18 @@ namespace AudioMixer
         {
             InitializeComponent();
             Connect();
-            controller.StepVolume = 0.04f;
+            for (int i = 0; i < controller.CountProgram; i++)
+            {
+                controller.GetAudioProgram(i).StepVolume = 0.04f;
+            }
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            for (byte i = 1; i <= 3; i++)
-            usb.SpecifiedDevice.SendData(USBCommand.CreateCommandVolume(0, i));
+            for (int i = 1; i <= controller.CountProgram; i++)
+            {
+                usb.SpecifiedDevice.SendData(USBCommand.CreateCommandVolume(0, (byte)i));
+            }
         }
 
         #endregion
@@ -41,59 +46,58 @@ namespace AudioMixer
 
         private void trackBar_Scroll(object sender, EventArgs e)
         {
-            string programName = "";
+           
             TrackBar trackBar;
-            byte numberProgram = 0;
+            byte numberProgram;
+           
             switch (((TrackBar)sender).Name)
             {
                 case "trackBar1":
-                    programName = "Program1";
-                    numberProgram = 1;
+                   
+                    numberProgram = 0;
                     trackBar = trackBar1;
                     break;
                 case "trackBar2":
-                    programName = "Program2";
-                    numberProgram = 2;
+
+                    numberProgram = 1;
                     trackBar = trackBar2;
                     break;
                 case "trackBar3":
-                    programName = "Program3";
-                    numberProgram = 3;
+ 
+                    numberProgram = 2;
                     trackBar = trackBar3;
                     break;
                 default:
                     return;
             }
 
-            controller.VolumeSet(programName, trackBar.Value);
+            controller.GetAudioProgram(numberProgram).Volume = trackBar.Value;
             usb.SpecifiedDevice.SendData(USBCommand.CreateCommandVolume((byte)trackBar.Value, numberProgram));
 
         }
 
         private void Program_Button_Click(object sender, EventArgs e)
         {
-            string programName = "";
+
             string programPath = OpenDialog();
+            if (programPath == "") return;
             byte numberProgram;
             TrackBar trackBar;
             Label label;
             switch (((Button)sender).Name)
             {
                 case "program_1_button":
-                    programName = "Program1";
-                    numberProgram = 1;
+                    numberProgram = 0;
                     label = label1;
                     trackBar = trackBar1;
                     break;
                 case "program_2_button":
-                    programName = "Program2";
-                    numberProgram = 2;
+                    numberProgram = 1;
                     label = label2;
                     trackBar = trackBar2;
                     break;
                 case "program_3_button":
-                    programName = "Program3";
-                    numberProgram = 3;
+                    numberProgram = 2;
                     label = label3;
                     trackBar = trackBar3;
                     break;
@@ -101,13 +105,8 @@ namespace AudioMixer
                     return;
             }
 
-            if (programPath == "" || programName == "")
-            {
-                return;
-            }
-
-            controller.AddProgram(programName, programPath);
-            trackBar.Value = controller.CurrentVolume(programName);
+            controller.AddProgram("program_" + numberProgram, programPath);
+            trackBar.Value = controller.GetAudioProgram(numberProgram).Volume;
             usb.SpecifiedDevice.SendData(USBCommand.CreateCommandVolume((byte)trackBar.Value, numberProgram));
             label.Text = programPath;
 
@@ -236,40 +235,40 @@ namespace AudioMixer
                         string rec_data = "Data: ";
                         foreach (byte myData in args.data)
                         {
-
                             rec_data += myData.ToString("X3") + " ";
                         }
-
                         this.listBox1.Items.Insert(0, rec_data);
 
+
                         byte numberProgram = 0;
-                        byte volume = 0;
-                        if (USBCommand.ParseCommandVolume(args.data, ref numberProgram, ref volume))
+                        byte rotation = 0;
+                        byte position = 0;
+                        if (USBCommand.ParseCommandVolume(args.data, ref numberProgram, ref rotation, ref position))
                         {
-                            if (volume == 0)
+                            if (rotation == 0)
                             {
-                                controller.VolumeDown("Program" + numberProgram);
-                            } else if (volume == 1)
+                                controller.GetAudioProgram(numberProgram).Volume = controller.GetAudioProgram(numberProgram).Volume + position * 4;
+                            } else if (rotation == 1)
                             {
-                                controller.VolumeUp("Program" + numberProgram);
+                                controller.GetAudioProgram(numberProgram).Volume = controller.GetAudioProgram(numberProgram).Volume - position * 4;
 
                             }
                             TrackBar trackBar;
                             switch (numberProgram)
                             {
-                                case 1:
+                                case 0:
                                     trackBar = trackBar1;
                                     break;
-                                case 2:
+                                case 1:
                                     trackBar = trackBar2;
                                     break;
-                                case 3:
+                                case 2:
                                     trackBar = trackBar3;
                                     break;
                                 default:
                                     return;
                             }
-                            trackBar.Value = controller.CurrentVolume("Program" + numberProgram);
+                            trackBar.Value = controller.GetAudioProgram(numberProgram).Volume;
                             usb.SpecifiedDevice.SendData(USBCommand.CreateCommandVolume((byte)trackBar.Value, numberProgram));
                         }
 
