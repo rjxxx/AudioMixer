@@ -3,30 +3,30 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using static Audio.AudioUtilities;
 
 namespace Audio
 {
     public sealed class AudioSession : IDisposable
     {
-        private AudioUtilities.IAudioSessionControl2 _ctl;
         private Process _process;
-
-        internal AudioSession(AudioUtilities.IAudioSessionControl2 ctl)
+        internal IAudioSessionControl2 AudioSessionControl2 { get; private set; }
+        ISimpleAudioVolume volumeControl;
+        internal AudioSession(IAudioSessionControl2 ctl)
         {
-            _ctl = ctl;
+            AudioSessionControl2 = ctl;
+            volumeControl = AudioSessionControl2 as ISimpleAudioVolume;
         }
 
         public float Volume
         {
             get
             {
-                AudioUtilities.ISimpleAudioVolume volumeControl = _ctl as AudioUtilities.ISimpleAudioVolume;
                 volumeControl.GetMasterVolume(out float level);
                 return level;
             }
             set
             { 
-                AudioUtilities.ISimpleAudioVolume volumeControl = _ctl as AudioUtilities.ISimpleAudioVolume;
                 if (value > 1)
                 {
                     value = 1;
@@ -42,13 +42,11 @@ namespace Audio
         {
             get
             {
-                AudioUtilities.ISimpleAudioVolume volumeControl = _ctl as AudioUtilities.ISimpleAudioVolume;
                 volumeControl.GetMute(out bool mute);
                 return mute;
             }
             set
             {
-                AudioUtilities.ISimpleAudioVolume volumeControl = _ctl as AudioUtilities.ISimpleAudioVolume;
                 volumeControl.SetMute(value, Guid.Empty);
             }
         }
@@ -78,7 +76,7 @@ namespace Audio
             {
                 CheckDisposed();
                 int i;
-                _ctl.GetProcessId(out i);
+                AudioSessionControl2.GetProcessId(out i);
                 return i;
             }
         }
@@ -89,7 +87,7 @@ namespace Audio
             {
                 CheckDisposed();
                 string s;
-                _ctl.GetSessionIdentifier(out s);
+                AudioSessionControl2.GetSessionIdentifier(out s);
                 return s;
             }
         }
@@ -100,7 +98,7 @@ namespace Audio
             {
                 CheckDisposed();
                 string s;
-                _ctl.GetSessionInstanceIdentifier(out s);
+                AudioSessionControl2.GetSessionInstanceIdentifier(out s);
                 return s;
             }
         }
@@ -111,7 +109,7 @@ namespace Audio
             {
                 CheckDisposed();
                 AudioSessionState s;
-                _ctl.GetState(out s);
+                AudioSessionControl2.GetState(out s);
                 return s;
             }
         }
@@ -122,13 +120,13 @@ namespace Audio
             {
                 CheckDisposed();
                 Guid g;
-                _ctl.GetGroupingParam(out g);
+                AudioSessionControl2.GetGroupingParam(out g);
                 return g;
             }
             set
             {
                 CheckDisposed();
-                _ctl.SetGroupingParam(value, Guid.Empty);
+                AudioSessionControl2.SetGroupingParam(value, Guid.Empty);
             }
         }
 
@@ -138,17 +136,17 @@ namespace Audio
             {
                 CheckDisposed();
                 string s;
-                _ctl.GetDisplayName(out s);
+                AudioSessionControl2.GetDisplayName(out s);
                 return s;
             }
             set
             {
                 CheckDisposed();
                 string s;
-                _ctl.GetDisplayName(out s);
+                AudioSessionControl2.GetDisplayName(out s);
                 if (s != value)
                 {
-                    _ctl.SetDisplayName(value, Guid.Empty);
+                    AudioSessionControl2.SetDisplayName(value, Guid.Empty);
                 }
             }
         }
@@ -159,24 +157,25 @@ namespace Audio
             {
                 CheckDisposed();
                 string s;
-                _ctl.GetIconPath(out s);
+                AudioSessionControl2.GetIconPath(out s);
                 return s;
             }
             set
             {
                 CheckDisposed();
                 string s;
-                _ctl.GetIconPath(out s);
+                AudioSessionControl2.GetIconPath(out s);
                 if (s != value)
                 {
-                    _ctl.SetIconPath(value, Guid.Empty);
+                    AudioSessionControl2.SetIconPath(value, Guid.Empty);
                 }
             }
         }
 
+
         private void CheckDisposed()
         {
-            if (_ctl == null)
+            if (AudioSessionControl2 == null)
                 throw new ObjectDisposedException("Control");
         }
 
@@ -194,10 +193,10 @@ namespace Audio
 
         public void Dispose()
         {
-            if (_ctl != null)
+            if (AudioSessionControl2 != null)
             {
-                Marshal.ReleaseComObject(_ctl);
-                _ctl = null;
+                Marshal.ReleaseComObject(AudioSessionControl2);
+                AudioSessionControl2 = null;
             }
         }
     }

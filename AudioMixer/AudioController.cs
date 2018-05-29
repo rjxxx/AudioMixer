@@ -58,7 +58,7 @@ namespace AudioMixer
 
         }
 
-        internal class AudioNotification : IAudioNotification
+        internal class AudioNotification : IAudioSessionNotification
         {
             AudioController parent;
             public AudioNotification(AudioController parent)
@@ -78,46 +78,12 @@ namespace AudioMixer
                     if (session.Process.MainModule.FileName == program.ExePath)
                     {
                         program.AddSession(session);
+                        program.Volume = (int)(session.Volume * 100);
                     }
 
                 }
             }
-            
-            public void OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason)
-            {
-                Console.WriteLine("1");
-            }
-
-            public void OnDisplayNameChanged([MarshalAs(UnmanagedType.LPWStr)] string NewDisplayName, [MarshalAs(UnmanagedType.LPStruct)] Guid EventContext)
-            {
-                Console.WriteLine("2");
-            }
-
-            public void OnIconPathChanged([MarshalAs(UnmanagedType.LPWStr)] string NewIconPath, [MarshalAs(UnmanagedType.LPStruct)] Guid EventContext)
-            {
-                Console.WriteLine("3");
-            }
-
-            public void OnSimpleVolumeChanged(float NewVolume, bool NewMute, [MarshalAs(UnmanagedType.LPStruct)] Guid EventContext)
-            {
-                Console.WriteLine("4");
-            }
-
-            public void OnChannelVolumeChanged(int ChannelCount, IntPtr NewChannelVolumeArray, int ChangedChannel, [MarshalAs(UnmanagedType.LPStruct)] Guid EventContext)
-            {
-                Console.WriteLine("5");
-            }
-
-            public void OnGroupingParamChanged([MarshalAs(UnmanagedType.LPStruct)] Guid NewGroupingParam, [MarshalAs(UnmanagedType.LPStruct)] Guid EventContext)
-            {
-                Console.WriteLine("6");
-            }
-
-            public void OnStateChanged(AudioSessionState NewState)
-            {
-                Console.WriteLine("7");
-            }
-
+    
         }
     } 
 }

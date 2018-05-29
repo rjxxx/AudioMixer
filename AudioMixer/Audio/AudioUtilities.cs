@@ -9,10 +9,7 @@ namespace Audio
 {
     public static class AudioUtilities
     {
-        internal interface IAudioNotification : IAudioSessionEvents, IAudioSessionNotification
-        {
 
-        }
 
         private static IAudioSessionManager2 GetAudioSessionManager()
         {
@@ -154,7 +151,7 @@ namespace Audio
             return list;
         }
 
-        internal static IList<AudioSession> GetAndSubscribeForAllSessions(IAudioNotification audioNotification)
+        internal static IList<AudioSession> GetAndSubscribeForAllSessions(IAudioSessionNotification audioNotification)
         {
             List<AudioSession> list = new List<AudioSession>();
             IAudioSessionManager2 mgr = GetAudioSessionManager();
@@ -164,21 +161,8 @@ namespace Audio
             IAudioSessionEnumerator sessionEnumerator;
             mgr.GetSessionEnumerator(out sessionEnumerator);
             sessionEnumerator.GetCount(out int count);
-
-            for (int i = 0; i < count; i++)
-            {
-                IAudioSessionControl ctl;
-                sessionEnumerator.GetSession(i, out ctl);
-                if (ctl == null)
-                    continue;
-                
-                IAudioSessionControl2 ctl2 = ctl as IAudioSessionControl2;
-                if (ctl2 != null)
-                {
-                    ctl2.RegisterAudioSessionNotification(audioNotification);
-                    list.Add(new AudioSession(ctl2));
-                }
-            }
+            IAudioSessionControl ctl;
+            sessionEnumerator.GetSession(0, out ctl);
             Marshal.ThrowExceptionForHR(mgr.RegisterSessionNotification(audioNotification));
             Marshal.ReleaseComObject(sessionEnumerator);
             Marshal.ReleaseComObject(mgr);

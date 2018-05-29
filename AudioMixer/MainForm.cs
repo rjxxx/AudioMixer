@@ -37,7 +37,7 @@ namespace AudioMixer
         {
             for (int i = 1; i <= controller.CountProgram; i++)
             {
-                usb.SpecifiedDevice.SendData(USBCommand.CreateCommandVolume(0, (byte)i));
+                usb.SpecifiedDevice?.SendData(USBCommand.CreateCommandVolume(0, (byte)i));
             }
         }
 
@@ -72,7 +72,7 @@ namespace AudioMixer
             }
 
             controller.GetAudioProgram(numberProgram).Volume = trackBar.Value;
-            usb.SpecifiedDevice.SendData(USBCommand.CreateCommandVolume((byte)trackBar.Value, numberProgram));
+            usb.SpecifiedDevice?.SendData(USBCommand.CreateCommandVolume((byte)trackBar.Value, numberProgram));
 
         }
 
@@ -107,7 +107,7 @@ namespace AudioMixer
 
             controller.AddProgram("program_" + numberProgram, programPath);
             trackBar.Value = controller.GetAudioProgram(numberProgram).Volume;
-            usb.SpecifiedDevice.SendData(USBCommand.CreateCommandVolume((byte)trackBar.Value, numberProgram));
+            usb.SpecifiedDevice?.SendData(USBCommand.CreateCommandVolume((byte)trackBar.Value, numberProgram));
             label.Text = programPath;
 
         }
