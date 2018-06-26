@@ -8,6 +8,10 @@ namespace AudioMixer
 {
     public static class USBCommand
     {
+        public const int COMMAND_SET_VOLUME = 1;
+        public const int COMMAND_SET_MUTE = 2;
+
+
         public static byte[] CreateCommandVolume(byte volume, byte numberProgram)
         {
             byte[] command = new byte[64];
@@ -16,6 +20,7 @@ namespace AudioMixer
             command[2] = volume;
             return command;
         }
+
 
         public static bool ParseCommandVolume(byte[] command, ref byte numberProgram, ref byte volume)
         {

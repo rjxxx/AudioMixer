@@ -6,116 +6,81 @@ using System.Text;
 using System.Drawing;
 using System.Windows.Forms;
 
+
 namespace UsbLibrary
 {
-    /// <summary>
-    /// This class provides an usb component. This can be placed ont to your form.
-    /// </summary>
 
     public partial class UsbHidPort
     {
         //private memebers
-        private int                             product_id;
-        private int                             vendor_id;
-        private Guid                            device_class;
+        private int                             ProductID;
+        private int                             VendorID;
+        private Guid                            deviceClass;
         private IntPtr                          usb_event_handle;
-        private SpecifiedDevice                 specified_device;
+        private SpecifiedDevice                 specifiedDevice;
         private IntPtr                          handle;
         //events
         /// <summary>
         /// This event will be triggered when the device you specified is pluged into your usb port on
         /// the computer. And it is completly enumerated by windows and ready for use.
         /// </summary>
-        [Description("The event that occurs when a usb hid device with the specified vendor id and product id is found on the bus")]
-        [Category("Embedded Event")]
-        [DisplayName("OnSpecifiedDeviceArrived")]
         public event EventHandler               OnSpecifiedDeviceArrived;
 
         /// <summary>
         /// This event will be triggered when the device you specified is removed from your computer.
         /// </summary>
-        [Description("The event that occurs when a usb hid device with the specified vendor id and product id is removed from the bus")]
-        [Category("Embedded Event")]
-        [DisplayName("OnSpecifiedDeviceRemoved")]
         public event EventHandler               OnSpecifiedDeviceRemoved;
 
         /// <summary>
         /// This event will be triggered when a device is pluged into your usb port on
         /// the computer. And it is completly enumerated by windows and ready for use.
         /// </summary>
-        [Description("The event that occurs when a usb hid device is found on the bus")]
-        [Category("Embedded Event")]
-        [DisplayName("OnDeviceArrived")]
         public event EventHandler               OnDeviceArrived;
 
         /// <summary>
         /// This event will be triggered when a device is removed from your computer.
         /// </summary>
-        [Description("The event that occurs when a usb hid device is removed from the bus")]
-        [Category("Embedded Event")]
-        [DisplayName("OnDeviceRemoved")]
         public event EventHandler               OnDeviceRemoved;
 
         /// <summary>
         /// This event will be triggered when data is recieved from the device specified by you.
         /// </summary>
-        [Description("The event that occurs when data is recieved from the embedded system")]
-        [Category("Embedded Event")]
-        [DisplayName("OnDataRecieved")]
         public event DataRecievedEventHandler   OnDataRecieved;
 
         /// <summary>
         /// This event will be triggered when data is send to the device. 
         /// It will only occure when this action wass succesfull.
         /// </summary>
-        [Description("The event that occurs when data is send from the host to the embedded system")]
-        [Category("Embedded Event")]
-        [DisplayName("OnDataSend")]
         public event EventHandler               OnDataSend;
 
-        public UsbHidPort()
+        public UsbHidPort(int ProductID, int VendorID)
         {
             //initializing in initial state
-            product_id = 0;
-            vendor_id = 0;
-            specified_device = null;
-            device_class = Win32Usb.HIDGuid;
-
-          
+            this.ProductID = 0;
+            this.VendorID = 0;
+            specifiedDevice = null;
+            deviceClass = Win32Usb.HIDGuid; 
         }
        
-
-        [Description("The product id from the USB device you want to use")]
-        [DefaultValue("(none)")]
-        [Category("Embedded Details")]
         public int ProductId{
-            get { return this.product_id; }
-            set { this.product_id = value; }
+            get { return this.ProductID; }
+            set { this.ProductID = value; }
         }
 
-       [Description("The vendor id from the USB device you want to use")]
-       [DefaultValue("(none)")]
-       [Category("Embedded Details")]
         public int VendorId
         {
-            get { return this.vendor_id; }
-            set { this.vendor_id = value; }
+            get { return this.VendorID; }
+            set { this.VendorID = value; }
         }
 
-        [Description("The Device Class the USB device belongs to")]
-        [DefaultValue("(none)")]
-        [Category("Embedded Details")]
         public Guid DeviceClass
         {
-            get { return device_class; }
+            get { return deviceClass; }
         }
 
-        [Description("The Device witch applies to the specifications you set")]
-        [DefaultValue("(none)")]
-        [Category("Embedded Details")]
         public SpecifiedDevice SpecifiedDevice
         {
-            get { return this.specified_device; }
+            get { return this.specifiedDevice; }
         }
 
         /// <summary>
@@ -132,7 +97,7 @@ namespace UsbLibrary
         ///</code>
         ///</example>
         public void RegisterHandle(IntPtr Handle){
-            usb_event_handle = Win32Usb.RegisterForUsbEvents(Handle, device_class);
+            usb_event_handle = Win32Usb.RegisterForUsbEvents(Handle, deviceClass);
             this.handle = Handle;
             //Check if the device is already present.
             CheckDevicePresent();
@@ -200,18 +165,18 @@ namespace UsbLibrary
             {
                 //Mind if the specified device existed before.
                 bool history = false;
-                if(specified_device != null ){
+                if(specifiedDevice != null ){
                     history = true;
                 }
 
-                specified_device = SpecifiedDevice.FindSpecifiedDevice(this.vendor_id, this.product_id);	// look for the device on the USB bus
-                if (specified_device != null)	// did we find it?
+                specifiedDevice = SpecifiedDevice.FindSpecifiedDevice(this.VendorID, this.ProductID);	// look for the device on the USB bus
+                if (specifiedDevice != null)	// did we find it?
                 {
                     if (OnSpecifiedDeviceArrived != null)
                     {
                         this.OnSpecifiedDeviceArrived(this, new EventArgs());
-                        specified_device.DataRecieved += new DataRecievedEventHandler(OnDataRecieved);
-                        specified_device.DataSent += new DataSendEventHandler(OnDataSend);
+                        specifiedDevice.DataRecieved += new DataRecievedEventHandler(OnDataRecieved);
+                        specifiedDevice.DataSent += new DataSendEventHandler(OnDataSend);
                     }
                 }
                 else
@@ -230,18 +195,12 @@ namespace UsbLibrary
 
         private void DataRecieved(object sender, DataRecievedEventArgs args)
         {
-            if(this.OnDataRecieved != null){
-                this.OnDataRecieved(sender, args);
-            }
+            this.OnDataRecieved?.Invoke(sender, args);
         }
 
         private void DataSend(object sender, DataSendEventArgs args)
         {
-            if (this.OnDataSend != null)
-            {
-                this.OnDataSend(sender, args);
-            }
+            this.OnDataSend?.Invoke(sender, args);
         }
-    
     }
 }

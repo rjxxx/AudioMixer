@@ -6,7 +6,9 @@ using System.Threading;
 using System.Windows.Forms;
 using UsbLibrary;
 using Audio;
-
+using System.Configuration;
+using System.Collections.Specialized;
+using System.IO;
 
 namespace AudioMixer
 {
@@ -14,13 +16,12 @@ namespace AudioMixer
 
     public partial class MainForm: Form
     {
-        private UInt16 USBDevProductID = 0x8036;
-        private UInt16 USBDevVendorID = 0x2341;
         private static Object lockObjMain = new Object();
-        public static UsbHidPort usb = new UsbHidPort();
+        public static UsbHidPort usb = new UsbHidPort(0x8036, 0x2341);
         AudioController controller = new AudioController();
+        private bool isClose = false;
+        BlogSettings settings = new BlogSettings();
 
-        
 
         #region События формы
         public MainForm()
@@ -31,18 +32,51 @@ namespace AudioMixer
             {
                 controller.GetAudioProgram(i).StepVolume = 0.04f;
             }
+            
         }
-
-        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+        private void MainForm_Load(object sender, EventArgs e)
         {
-            for (int i = 1; i <= controller.CountProgram; i++)
+            this.Hide();
+            for (int i = 0; i < Properties.Settings.Default.Paths.Count; i++)
             {
-                usb.SpecifiedDevice?.SendData(USBCommand.CreateCommandVolume(0, (byte)i));
+                if (File.Exists(Properties.Settings.Default.Paths[i]))
+                {
+                    AddProgram(i, Properties.Settings.Default.Paths[i]);
+                } else
+                {
+                    AddProgram(i, null);
+                }
+                
             }
         }
 
-        #endregion
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (isClose)
+            {
+                for (int i = 1; i <= controller.CountProgram; i++)
+                {
+                    usb.SpecifiedDevice?.SendData(USBCommand.CreateCommandVolume(0, (byte)i));
+                }
 
+                for (int i = 0; i < controller.CountProgram; i++)
+                {
+                    if (Properties.Settings.Default.Paths.Count > i)
+                    {
+                        Properties.Settings.Default.Paths[i] = controller.GetAudioProgram(i).ExePath;
+                    } else
+                    {
+                        Properties.Settings.Default.Paths.Add(controller.GetAudioProgram(i).ExePath);
+                    }
+                }
+                Properties.Settings.Default.Save();
+                return;
+            }
+
+            this.Hide();
+            e.Cancel = true;
+        }
+        #endregion
 
         private void trackBar_Scroll(object sender, EventArgs e)
         {
@@ -53,17 +87,14 @@ namespace AudioMixer
             switch (((TrackBar)sender).Name)
             {
                 case "trackBar1":
-                   
                     numberProgram = 0;
                     trackBar = trackBar1;
                     break;
                 case "trackBar2":
-
                     numberProgram = 1;
                     trackBar = trackBar2;
                     break;
                 case "trackBar3":
- 
                     numberProgram = 2;
                     trackBar = trackBar3;
                     break;
@@ -76,27 +107,24 @@ namespace AudioMixer
 
         }
 
-        private void Program_Button_Click(object sender, EventArgs e)
+        private void AddProgram(int index, string programPath)
         {
-
-            string programPath = OpenDialog();
-            if (programPath == "") return;
             byte numberProgram;
             TrackBar trackBar;
             Label label;
-            switch (((Button)sender).Name)
+            switch (index)
             {
-                case "program_1_button":
+                case 0:
                     numberProgram = 0;
                     label = label1;
                     trackBar = trackBar1;
                     break;
-                case "program_2_button":
+                case 1:
                     numberProgram = 1;
                     label = label2;
                     trackBar = trackBar2;
                     break;
-                case "program_3_button":
+                case 2:
                     numberProgram = 2;
                     label = label3;
                     trackBar = trackBar3;
@@ -109,40 +137,27 @@ namespace AudioMixer
             trackBar.Value = controller.GetAudioProgram(numberProgram).Volume;
             usb.SpecifiedDevice?.SendData(USBCommand.CreateCommandVolume((byte)trackBar.Value, numberProgram));
             label.Text = programPath;
-
         }
-
-        private void Send_button_Click(object sender, EventArgs e)
+        private void Program_Button_Click(object sender, EventArgs e)
         {
-            try
+            string programPath = OpenDialog();
+            if (programPath == "") return;
+            int index;
+            switch (((Button)sender).Name)
             {
-                string text = this.textBox1.Text + " ";
-                text.Trim();
-                string[] arrText = text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                byte[] data = new byte[arrText.Length];
-                for (int i = 0; i < arrText.Length; i++)
-                {
-                    if (arrText[i] != "")
-                    {
-                        int value = Int32.Parse(arrText[i], System.Globalization.NumberStyles.HexNumber);
-                        data[i] = (byte)Convert.ToByte(value);
-                    }
-                }
-
-                if (usb.SpecifiedDevice != null)
-                {
-                    usb.SpecifiedDevice.SendData(data);
-                }
-                else
-                {
-                    MessageBox.Show("Sorry but your device is not present. Plug it in!! ");
-                }
-
+                case "program_1_button":
+                    index = 0;
+                    break;
+                case "program_2_button":
+                    index = 1;
+                    break;
+                case "program_3_button":
+                    index = 2;
+                    break;
+                default:
+                    return;
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
+            AddProgram(index, programPath);
         }
 
         private void Clear_button_Click(object sender, EventArgs e)
@@ -170,10 +185,6 @@ namespace AudioMixer
             usb.OnDeviceRemoved += new System.EventHandler(usb_OnDeviceRemoved);
             usb.OnDataRecieved += new UsbLibrary.DataRecievedEventHandler(usb_OnDataRecieved);
             usb.OnDataSend += new System.EventHandler(usb_OnDataSend);
-
-            usb.ProductId = USBDevProductID;
-            usb.VendorId = USBDevVendorID;
-           
         }
 
 
@@ -304,6 +315,39 @@ namespace AudioMixer
         #endregion
 
         #endregion
+
+        private void SendVolumeCommand(byte numberProgram, byte volume)
+        {
+            byte[] command = new byte[64];
+            command[0] = USBCommand.COMMAND_SET_VOLUME;
+            command[1] = numberProgram;
+            command[2] = volume;
+            usb.SpecifiedDevice?.SendData(command);
+
+        }
+        private void SendMuteCommand(byte numberProgram, bool isMute)
+        {
+            byte[] command = new byte[64];
+            command[0] = USBCommand.COMMAND_SET_MUTE;
+            command[1] = (byte) (isMute ? 1 : 0);
+            usb.SpecifiedDevice?.SendData(command);
+        }
+
+        private void notifyIcon1_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.Show();
+                this.WindowState = FormWindowState.Normal;
+            }
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            isClose = true;
+            this.Close();
+        }
+
         
     }
 }

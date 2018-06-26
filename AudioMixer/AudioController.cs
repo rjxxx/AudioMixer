@@ -1,10 +1,6 @@
 ﻿using Audio;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Runtime.InteropServices;
 using static Audio.AudioUtilities;
 
 namespace AudioMixer
@@ -78,7 +74,7 @@ namespace AudioMixer
                     if (session.Process.MainModule.FileName == program.ExePath)
                     {
                         program.AddSession(session);
-                        program.Volume = (int)(session.Volume * 100);
+                        //program.Volume = (int)(session.Volume * 100);
                     }
 
                 }
